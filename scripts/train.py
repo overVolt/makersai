@@ -4,11 +4,11 @@ from os.path import isfile
 print("\n * Loading config...")
 
 model_cfg = {
-    'word_level': True,             # set to True if want to train a word-level model (requires more data and smaller max_length)
+    'word_level': False,            # set to True if want to train a word-level model (requires more data and smaller max_length)
     'rnn_size': 256,                # number of LSTM cells of each layer (128/256 recommended)
-    'rnn_layers': 3,                # number of LSTM layers (>=2 recommended)
+    'rnn_layers': 5,                # number of LSTM layers (>=2 recommended)
     'rnn_bidirectional': False,     # consider text both forwards and backward, can give a training boost
-    'max_length': 7,                # number of tokens to consider before predicting the next (20-40 for characters, 5-10 for words recommended)
+    'max_length': 30,               # number of tokens to consider before predicting the next (20-40 for characters, 5-10 for words recommended)
     'max_words': 10000,             # maximum number of words to model; the rest will be ignored (word-level model only)
     'name': "MakersAI"              # model name
 }
@@ -64,3 +64,4 @@ for i in range(train_cfg['train_files']):
 
     print("\n * Saving model...")
     ai.save(f"{model_cfg['name']}_backup.hdf5")
+    isNewModel = True
