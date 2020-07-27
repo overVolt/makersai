@@ -17,6 +17,7 @@ train_cfg = {
     'line_delimited': True,         # set to True if each text has its own line in the source file
     'num_epochs': 20,               # set higher to train the model for longer
     'gen_epochs': 5,                # generates sample text from model after given number of epochs
+    'num_runs': 5,                  # number of times to repeat the training for
     'train_size': 1.0,              # proportion of input data to train on: setting < 1.0 limits model from learning perfectly
     'dropout': 0.1,                 # ignore a random proportion of source tokens each epoch, allowing model to generalize better
     'validation': False,            # if train__size < 1.0, test on holdout dataset; will make overall training slower
@@ -40,28 +41,30 @@ else:
 train_function = ai.train_from_file if train_cfg['line_delimited'] else ai.train_from_largetext_file
 
 print("\n * Training model...")
-for i in range(train_cfg['train_files']):
-    filename = f"dataset/data{i+1}.txt"
-    print(f" * Training on {filename} for {train_cfg['num_epochs']} epochs...")
+for r in range(train_cfg['num_runs']):
+    print(f" * Starting run {r+1} of {train_cfg['num_runs']}...")
+    for f in range(train_cfg['train_files']):
+        filename = f"dataset/data{f+1}.txt"
+        print(f" * Training on {filename} for {train_cfg['num_epochs']} epochs...")
 
-    train_function(
-        file_path=filename,
-        new_model=isNewModel,
-        num_epochs=train_cfg['num_epochs'],
-        gen_epochs=train_cfg['gen_epochs'],
-        batch_size=train_cfg['batch_size'],
-        train_size=train_cfg['train_size'],
-        dropout=train_cfg['dropout'],
-        validation=train_cfg['validation'],
-        is_csv=train_cfg['is_csv'],
-        rnn_layers=model_cfg['rnn_layers'],
-        rnn_size=model_cfg['rnn_size'],
-        rnn_bidirectional=model_cfg['rnn_bidirectional'],
-        max_length=model_cfg['max_length'],
-        dim_embeddings=100,
-        word_level=model_cfg['word_level']
-    )
+        train_function(
+            file_path=filename,
+            new_model=isNewModel,
+            num_epochs=train_cfg['num_epochs'],
+            gen_epochs=train_cfg['gen_epochs'],
+            batch_size=train_cfg['batch_size'],
+            train_size=train_cfg['train_size'],
+            dropout=train_cfg['dropout'],
+            validation=train_cfg['validation'],
+            is_csv=train_cfg['is_csv'],
+            rnn_layers=model_cfg['rnn_layers'],
+            rnn_size=model_cfg['rnn_size'],
+            rnn_bidirectional=model_cfg['rnn_bidirectional'],
+            max_length=model_cfg['max_length'],
+            dim_embeddings=100,
+            word_level=model_cfg['word_level']
+        )
 
-    print("\n * Saving model...")
-    ai.save(f"{model_cfg['name']}_backup.hdf5")
-    isNewModel = True
+        print("\n * Saving model...")
+        ai.save(f"{model_cfg['name']}_backup.hdf5")
+        isNewModel = True
