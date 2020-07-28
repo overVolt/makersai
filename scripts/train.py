@@ -26,26 +26,23 @@ train_cfg = {
     'train_files': 11               # number of files that compose the dataset: dataset/dataN.txt
 }
 
-print(" * Loading model...")
-if not isfile(f"{model_cfg['name']}_weights.hdf5"):
-    print(" - File not found: generating new model.")
-    isNewModel = True
-    ai = textgenrnn(name=model_cfg['name'])
-else:
-    print(" + Weights file found: loading saved model.")
-    isNewModel = False
-    ai = textgenrnn(name=model_cfg['name'],
-                    vocab_path=f"{model_cfg['name']}_vocab.json",
-                    config_path=f"{model_cfg['name']}_config.json",
-                    weights_path=f"{model_cfg['name']}_weights.hdf5")
-train_function = ai.train_from_file if train_cfg['line_delimited'] else ai.train_from_largetext_file
-
 print("\n * Training model...")
 for r in range(train_cfg['num_runs']):
     print(f" * Starting run {r+1} of {train_cfg['num_runs']}...")
     for f in range(train_cfg['train_files']):
         filename = f"dataset/data{f+1}.txt"
         print(f" * Training on {filename} for {train_cfg['num_epochs']} epochs...")
+
+        if not isfile(f"{model_cfg['name']}_weights.hdf5"):
+            isNewModel = True
+            ai = textgenrnn(name=model_cfg['name'])
+        else:
+            isNewModel = False
+            ai = textgenrnn(name=model_cfg['name'],
+                            vocab_path=f"{model_cfg['name']}_vocab.json",
+                            config_path=f"{model_cfg['name']}_config.json",
+                            weights_path=f"{model_cfg['name']}_weights.hdf5")
+        train_function = ai.train_from_file if train_cfg['line_delimited'] else ai.train_from_largetext_file
 
         train_function(
             file_path=filename,
@@ -67,4 +64,3 @@ for r in range(train_cfg['num_runs']):
 
         print("\n * Saving model...")
         ai.save(f"{model_cfg['name']}_backup.hdf5")
-        isNewModel = True
