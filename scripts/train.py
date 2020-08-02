@@ -1,5 +1,6 @@
 from textgenrnn import textgenrnn
 from os.path import isfile
+from sys import argv
 
 print("\n * Loading config...")
 
@@ -7,7 +8,7 @@ model_cfg = {
     'word_level': False,            # set to True if want to train a word-level model (requires more data and smaller max_length)
     'rnn_size': 256,                # number of LSTM cells of each layer (128/256 recommended)
     'rnn_layers': 5,                # number of LSTM layers (>=2 recommended)
-    'rnn_bidirectional': False,     # consider text both forwards and backward, can give a training boost
+    'rnn_bidirectional': True,      # consider text both forwards and backward, can give a training boost
     'max_length': 30,               # number of tokens to consider before predicting the next (20-40 for characters, 5-10 for words recommended)
     'max_words': 10000,             # maximum number of words to model; the rest will be ignored (word-level model only)
     'name': "MakersAI"              # model name
@@ -15,21 +16,26 @@ model_cfg = {
 
 train_cfg = {
     'line_delimited': True,         # set to True if each text has its own line in the source file
-    'num_epochs': 20,               # set higher to train the model for longer
-    'gen_epochs': 5,                # generates sample text from model after given number of epochs
-    'num_runs': 5,                  # number of times to repeat the training for
+    'num_epochs': 10,               # set higher to train the model for longer
+    'gen_epochs': 10,               # generates sample text from model after given number of epochs
+    'num_runs': 10,                 # number of times to repeat the training for
     'train_size': 1.0,              # proportion of input data to train on: setting < 1.0 limits model from learning perfectly
     'dropout': 0.1,                 # ignore a random proportion of source tokens each epoch, allowing model to generalize better
     'validation': False,            # if train__size < 1.0, test on holdout dataset; will make overall training slower
     'is_csv': False,                # set to True if file is a CSV exported from Excel/BigQuery/pandas
-    'batch_size': 2048,             # training batch size
+    'batch_size': 1024,             # training batch size
     'train_files': 11               # number of files that compose the dataset: dataset/dataN.txt
 }
+
+startFile = 0
+if len(argv) > 1:
+    startFile = int(argv[1])
 
 print("\n * Training model...")
 for r in range(train_cfg['num_runs']):
     print(f" * Starting run {r+1} of {train_cfg['num_runs']}...")
-    for f in range(train_cfg['train_files']):
+
+    for f in range(startFile, train_cfg['train_files']):
         filename = f"dataset/data{f+1}.txt"
         print(f" * Training on {filename} for {train_cfg['num_epochs']} epochs...")
 
