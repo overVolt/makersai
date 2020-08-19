@@ -10,6 +10,7 @@ with open(join(dirname(abspath(__file__)), "settings.json")) as settings_file:
 
 bot = Bot(settings["token"])
 groupId = int(settings["groupId"])
+generating = False
 
 aiConfigPath = join(dirname(abspath(__file__)), f"{settings['aiModelName']}")
 ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
@@ -28,6 +29,7 @@ def generateText():
 
 
 def reply(msg):
+    global generating
     chatId = int(msg['chat']['id'])
     fromId = int(msg['from']['id'])
     msgId = int(msg['message_id'])
@@ -58,8 +60,11 @@ def reply(msg):
             bot.sendMessage(chatId, "pong")
 
         elif text == "/genera":
-            bot.sendChatAction(chatId, "typing")
-            bot.sendMessage(chatId, generateText())
+            if not generating:
+                generating = True
+                bot.sendChatAction(chatId, "typing")
+                bot.sendMessage(chatId, generateText())
+                generating = False
 
 
 def accept_message(msg):
