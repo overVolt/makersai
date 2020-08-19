@@ -30,7 +30,7 @@ def generateText():
 
 def isAdmin(userId: int, chatId: int):
     req = bot.getChatAdministrators(chatId)
-    adminList = [int(user["user"]["id"]) for user in req if not user["is_bot"]]
+    adminList = [int(user["user"]["id"]) for user in req if not user["user"]["is_bot"]]
     return userId in adminList
 
 
