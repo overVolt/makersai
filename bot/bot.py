@@ -41,7 +41,7 @@ def reply(msg):
 
     # Strip self-username from commands
     if text.startswith("/"):
-        text.replace("@" + bot.getMe()["username"], "")
+        text = text.replace("@" + bot.getMe()["username"], "")
 
     ## CHAT PRIVATE
     if chatInfo["type"] == "private":
@@ -58,8 +58,6 @@ def reply(msg):
 
         elif text == "/genera":
             bot.sendMessage(chatId, generateText())
-
-    print(bot.getChat(chatId))
 
 
 def accept_message(msg):
