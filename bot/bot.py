@@ -19,9 +19,10 @@ ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
 
 def generateText():
     return ai.generate(
+        n=1,
         return_as_list=True,
-        temperature=[0.2],
-        max_gen_length=150,
+        temperature=[0.5],
+        max_gen_length=100,
         progress=False
     )[0]
 
@@ -57,6 +58,7 @@ def reply(msg):
             bot.sendMessage(chatId, "pong")
 
         elif text == "/genera":
+            bot.sendChatAction(chatId, "typing")
             bot.sendMessage(chatId, generateText())
 
 
