@@ -65,10 +65,12 @@ def reply(msg):
             bot.leaveChat(chatId)
             return
 
-        if text == "ping":
+        if text.lower() == "ping":
             bot.sendMessage(chatId, "pong")
-        elif text == "over":
+        elif text.lower() == "over":
             bot.sendMessage(chatId, "Volt!")
+        elif text.lower() == "cose":
+            bot.sendMessage(chatId, "varie")
 
         elif text.startswith("/pronuncia ") and isAdmin(fromId, chatId):
             replyId = msg["reply_to_message"]["message_id"] if "reply_to_message" in msg else None
