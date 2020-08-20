@@ -30,8 +30,9 @@ def generateText():
         max_gen_length=140,
         progress=False
     )[0]
+    yield string
+    sleep(10)
     generateLock = False
-    return string
 
 
 def isAdmin(userId: int, chatId: int):
@@ -72,13 +73,20 @@ def reply(msg):
             return
 
         if text.lower() == "ping":
-            bot.sendMessage(chatId, "pong", reply_to_message_id=msgId)
+            if randint(1, 4) == 4:
+                bot.sendMessage(chatId, "pong", reply_to_message_id=msgId)
+
         elif text.lower() == "over":
-            bot.sendMessage(chatId, "Volt!", reply_to_message_id=msgId)
+            if randint(1, 4) == 4:
+                bot.sendMessage(chatId, "Volt!", reply_to_message_id=msgId)
+
         elif text.lower().endswith("cose"):
-            bot.sendMessage(chatId, "varie", reply_to_message_id=msgId)
-        elif "cose diverse" in text.lower():
-            bot.sendMessage(chatId, "cose varie*", reply_to_message_id=msgId)
+            if randint(1, 4) == 4:
+                bot.sendMessage(chatId, "varie", reply_to_message_id=msgId)
+
+        elif "cose diverse" in text.lower() or "cose strane" in text.lower():
+            if randint(1, 4) == 4:
+                bot.sendMessage(chatId, "cose varie*", reply_to_message_id=msgId)
 
         elif text.startswith("/pronuncia ") and isAdmin(fromId, chatId):
             replyId = msg["reply_to_message"]["message_id"] if "reply_to_message" in msg else None
