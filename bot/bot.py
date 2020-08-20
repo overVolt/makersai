@@ -30,9 +30,8 @@ def generateText():
         max_gen_length=140,
         progress=False
     )[0]
-    yield string
-    sleep(10)
     generateLock = False
+    return string
 
 
 def isAdmin(userId: int, chatId: int):
