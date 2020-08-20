@@ -35,6 +35,20 @@ def generateText():
     generateLock = False
 
 
+def sendText(chatId: int):
+    global generateLock
+    if generateLock:
+        sent = bot.sendMessage(chatId, f"Aspetta {settings['genCooldownSec']} secondi prima di usarmi di nuovo.")
+        sleep(2)
+        bot.deleteMessage((chatId, sent["message_id"]))
+    else:
+        generateLock = True
+        bot.sendChatAction(chatId, "typing")
+        sleep(2)
+        bot.sendMessage(chatId, cachedString)
+        generateText()
+
+
 def isAdmin(userId: int, chatId: int):
     req = bot.getChatAdministrators(chatId)
     adminList = [int(user["user"]["id"]) for user in req if not user["user"]["is_bot"]]
@@ -77,19 +91,19 @@ def reply(msg):
             return
 
         if text.lower() == "ping":
-            if randint(1, 4) == 4:
+            if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "pong", reply_to_message_id=msgId)
 
         elif text.lower() == "over":
-            if randint(1, 4) == 4:
+            if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "Volt!", reply_to_message_id=msgId)
 
         elif text.lower().endswith("cose"):
-            if randint(1, 4) == 4:
+            if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "varie", reply_to_message_id=msgId)
 
         elif "cose diverse" in text.lower() or "cose strane" in text.lower():
-            if randint(1, 4) == 4:
+            if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "cose varie*", reply_to_message_id=msgId)
 
         elif text.startswith("/pronuncia ") and isAdmin(fromId, chatId):
@@ -105,17 +119,8 @@ def reply(msg):
             generateLock = False
             bot.sendMessage(chatId, "Comando /genera sbloccato!")
 
-        elif text == "/genera" and not generateLock:
-            bot.sendChatAction(chatId, "typing")
-            sleep(2)
-            bot.sendMessage(chatId, cachedString)
-            generateText()
-
-        elif "@makersitabot" in text and not generateLock:
-            bot.sendChatAction(chatId, "typing")
-            sleep(2)
-            bot.sendMessage(chatId, cachedString, reply_to_message_id=msgId)
-            generateText()
+        elif (text == "/genera") or ("@makersitabot" in text):
+            sendText(chatId)
 
 
 def accept_message(msg):
