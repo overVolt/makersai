@@ -31,7 +31,7 @@ def generateText():
         max_gen_length=280,
         progress=False
     )[0]
-    sleep(settings["genCooldownSec"])
+    sleep(settings["genCooldownSec"]-2)
     generateLock = False
 
 
@@ -58,6 +58,10 @@ def reply(msg):
     # Strip self-username from commands
     if text.startswith("/"):
         text = text.replace("@makersitabot", "")
+        try:
+            bot.deleteMessage((chatId, msgId))
+        except:
+            pass
 
     ## CHAT PRIVATE
     if chatInfo["type"] == "private":
@@ -103,11 +107,13 @@ def reply(msg):
 
         elif text == "/genera" and not generateLock:
             bot.sendChatAction(chatId, "typing")
+            sleep(2)
             bot.sendMessage(chatId, cachedString)
             generateText()
 
         elif "@makersitabot" in text and not generateLock:
             bot.sendChatAction(chatId, "typing")
+            sleep(2)
             bot.sendMessage(chatId, cachedString, reply_to_message_id=msgId)
             generateText()
 
