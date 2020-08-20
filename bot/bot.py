@@ -66,11 +66,13 @@ def reply(msg):
             return
 
         if text.lower() == "ping":
-            bot.sendMessage(chatId, "pong")
+            bot.sendMessage(chatId, "pong", reply_to_message_id=msgId)
         elif text.lower() == "over":
-            bot.sendMessage(chatId, "Volt!")
-        elif text.lower() == "cose":
-            bot.sendMessage(chatId, "varie")
+            bot.sendMessage(chatId, "Volt!", reply_to_message_id=msgId)
+        elif text.lower().endswith("cose"):
+            bot.sendMessage(chatId, "varie", reply_to_message_id=msgId)
+        elif "cose diverse" in text.lower():
+            bot.sendMessage(chatId, "cose varie*", reply_to_message_id=msgId)
 
         elif text.startswith("/pronuncia ") and isAdmin(fromId, chatId):
             replyId = msg["reply_to_message"]["message_id"] if "reply_to_message" in msg else None
