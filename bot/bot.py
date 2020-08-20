@@ -27,7 +27,7 @@ def generateText():
         n=1,
         return_as_list=True,
         temperature=[0.5],
-        max_gen_length=280,
+        max_gen_length=140,
         progress=False
     )[0]
     generateLock = False
@@ -45,7 +45,6 @@ def reply(msg):
     chatId = int(msg['chat']['id'])
     fromId = int(msg['from']['id'])
     msgId = int(msg['message_id'])
-    replyMsg = msg["reply_to_message"] if "reply_to_message" in msg else None
     chatInfo = bot.getChat(chatId)
 
     if "text" in msg:
@@ -58,13 +57,6 @@ def reply(msg):
     # Strip self-username from commands
     if text.startswith("/"):
         text = text.replace("@makersitabot", "")
-
-    # Check message info
-    isTagged = "@makersitabot" in text
-
-    isMentioned = False
-    if replyMsg:
-        isMentioned = replyMsg["from"]["username"] == "@makersitabot"
 
     ## CHAT PRIVATE
     if chatInfo["type"] == "private":
@@ -101,9 +93,13 @@ def reply(msg):
             generateLock = False
             bot.sendMessage(chatId, "Comando /genera sbloccato!")
 
-        elif ( (text == "/genera") or isTagged or isMentioned ) and not generateLock:
+        elif text == "/genera" and not generateLock:
             bot.sendChatAction(chatId, "typing")
             bot.sendMessage(chatId, generateText())
+
+        elif "@makersitabot" in text and not generateLock:
+            bot.sendChatAction(chatId, "typing")
+            bot.sendMessage(chatId, generateText(), reply_to_message_id=msgId)
 
 
 def accept_message(msg):
