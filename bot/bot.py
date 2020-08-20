@@ -13,6 +13,7 @@ with open(join(dirname(abspath(__file__)), "settings.json")) as settings_file:
 bot = Bot(settings["token"])
 groupId = int(settings["groupId"])
 generateLock = False
+cachedString = "Message not generated."
 
 aiConfigPath = join(dirname(abspath(__file__)), f"{settings['aiModelName']}")
 ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
@@ -21,17 +22,17 @@ ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
 
 
 def generateText():
-    global generateLock
+    global generateLock, cachedString
     generateLock = True
-    string = ai.generate(
+    cachedString = ai.generate(
         n=1,
         return_as_list=True,
         temperature=[0.5],
-        max_gen_length=140,
+        max_gen_length=280,
         progress=False
     )[0]
+    sleep(settings["genCooldownSec"])
     generateLock = False
-    return string
 
 
 def isAdmin(userId: int, chatId: int):
@@ -102,17 +103,20 @@ def reply(msg):
 
         elif text == "/genera" and not generateLock:
             bot.sendChatAction(chatId, "typing")
-            bot.sendMessage(chatId, generateText())
+            bot.sendMessage(chatId, cachedString)
+            generateText()
 
         elif "@makersitabot" in text and not generateLock:
             bot.sendChatAction(chatId, "typing")
-            bot.sendMessage(chatId, generateText(), reply_to_message_id=msgId)
+            bot.sendMessage(chatId, cachedString, reply_to_message_id=msgId)
+            generateText()
 
 
 def accept_message(msg):
     Thread(target=reply, args=[msg]).start()
 
 bot.message_loop({'chat': accept_message})
+generateText()
 
 while True:
     sleep(randint(settings["minSendInterval"]*60, settings["maxSendInterval"]*60))
@@ -120,4 +124,5 @@ while True:
     if hour in range(settings["sendStartHour"], settings["sendEndHour"]):
         if not generateLock:
             bot.sendChatAction(groupId, "typing")
-            bot.sendMessage(groupId, generateText())
+            bot.sendMessage(groupId, cachedString)
+            generateText()
