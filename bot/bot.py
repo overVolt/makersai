@@ -3,6 +3,8 @@ from time import sleep
 from threading import Thread
 from json import load as jsload
 from os.path import abspath, dirname, join
+from random import randint
+from datetime import datetime
 from textgenrnn import textgenrnn
 
 with open(join(dirname(abspath(__file__)), "settings.json")) as settings_file:
@@ -19,13 +21,17 @@ ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
 
 
 def generateText():
-    return ai.generate(
+    global generateLock
+    generateLock = True
+    string = ai.generate(
         n=1,
         return_as_list=True,
         temperature=[0.5],
-        max_gen_length=100,
+        max_gen_length=280,
         progress=False
     )[0]
+    generateLock = False
+    return string
 
 
 def isAdmin(userId: int, chatId: int):
@@ -39,6 +45,7 @@ def reply(msg):
     chatId = int(msg['chat']['id'])
     fromId = int(msg['from']['id'])
     msgId = int(msg['message_id'])
+    replyMsg = msg["reply_to_message"] if "reply_to_message" in msg else None
     chatInfo = bot.getChat(chatId)
 
     if "text" in msg:
@@ -50,7 +57,14 @@ def reply(msg):
 
     # Strip self-username from commands
     if text.startswith("/"):
-        text = text.replace("@" + bot.getMe()["username"], "")
+        text = text.replace("@makersitabot", "")
+
+    # Check message info
+    isTagged = "@makersitabot" in text
+
+    isMentioned = False
+    if replyMsg:
+        isMentioned = replyMsg["from"]["username"] == "@makersitabot"
 
     ## CHAT PRIVATE
     if chatInfo["type"] == "private":
@@ -87,11 +101,9 @@ def reply(msg):
             generateLock = False
             bot.sendMessage(chatId, "Comando /genera sbloccato!")
 
-        elif text == "/genera" and not generateLock:
-            generateLock = True
+        elif ( (text == "/genera") or isTagged or isMentioned ) and not generateLock:
             bot.sendChatAction(chatId, "typing")
             bot.sendMessage(chatId, generateText())
-            generateLock = False
 
 
 def accept_message(msg):
@@ -100,4 +112,9 @@ def accept_message(msg):
 bot.message_loop({'chat': accept_message})
 
 while True:
-    sleep(60)
+    sleep(randint(settings["minSendInterval"]*60, settings["maxSendInterval"]*60))
+    hour = datetime.now().hour
+    if hour in range(settings["sendStartHour"], settings["sendEndHour"]):
+        if not generateLock:
+            bot.sendChatAction(groupId, "typing")
+            bot.sendMessage(groupId, generateText())
