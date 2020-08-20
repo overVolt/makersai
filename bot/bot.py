@@ -39,14 +39,14 @@ def sendText(chatId: int):
     global generateLock
     if generateLock:
         sent = bot.sendMessage(chatId, f"Aspetta {settings['genCooldownSec']} secondi prima di usarmi di nuovo.")
-        sleep(2)
+        sleep(5)
         bot.deleteMessage((chatId, sent["message_id"]))
-    else:
-        generateLock = True
-        bot.sendChatAction(chatId, "typing")
-        sleep(2)
-        bot.sendMessage(chatId, cachedString)
-        generateText()
+        return
+    generateLock = True
+    bot.sendChatAction(chatId, "typing")
+    sleep(2)
+    bot.sendMessage(chatId, cachedString)
+    generateText()
 
 
 def isAdmin(userId: int, chatId: int):
