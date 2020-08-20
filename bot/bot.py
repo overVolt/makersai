@@ -31,7 +31,7 @@ def generateText():
         max_gen_length=280,
         progress=False
     )[0]
-    sleep(settings["genCooldownSec"]-2)
+    sleep(settings["genCooldownSec"]-5)
     generateLock = False
 
 
@@ -93,16 +93,20 @@ def reply(msg):
         if text.lower() == "ping":
             if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "pong", reply_to_message_id=msgId)
-
+        
         elif text.lower() == "over":
             if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "Volt!", reply_to_message_id=msgId)
+        
+        elif text.lower() == "no u":
+            if randint(0, 1) == 1:
+                bot.sendMessage(chatId, "no u", reply_to_message_id=msgId)
 
         elif text.lower().endswith("cose"):
             if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "varie", reply_to_message_id=msgId)
 
-        elif "cose diverse" in text.lower() or "cose strane" in text.lower():
+        elif ("cose diverse" in text.lower()) or ("cose strane" in text.lower()):
             if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "cose varie*", reply_to_message_id=msgId)
 
