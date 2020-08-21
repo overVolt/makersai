@@ -27,25 +27,25 @@ def generateText():
     cachedString = ai.generate(
         n=1,
         return_as_list=True,
-        temperature=[round(uniform(0.1, 0.5), 1)],
-        max_gen_length=140,
+        temperature=[round(uniform(0.2, 0.9), 1)],
+        max_gen_length=200,
         progress=False
     )[0]
     sleep(settings["genCooldownSec"]-5)
     generateLock = False
 
 
-def sendText(chatId: int):
+def sendText(chatId: int=groupId, replyId: int=None):
     global generateLock
     if generateLock:
-        sent = bot.sendMessage(chatId, f"Aspetta {settings['genCooldownSec']} secondi prima di usarmi di nuovo.")
+        sent = bot.sendMessage(chatId, f"Aspetta {settings['genCooldownSec']} secondi prima di usarmi di nuovo.", reply_to_message_id=replyId)
         sleep(5)
         bot.deleteMessage((chatId, sent["message_id"]))
         return
     generateLock = True
     bot.sendChatAction(chatId, "typing")
     sleep(2)
-    bot.sendMessage(chatId, cachedString)
+    bot.sendMessage(chatId, cachedString, reply_to_message_id=replyId)
     generateText()
 
 
@@ -123,8 +123,11 @@ def reply(msg):
             generateLock = False
             bot.sendMessage(chatId, "Comando /genera sbloccato!")
 
-        elif (text == "/genera") or ("@makersitabot" in text):
+        elif text == "/genera":
             sendText(chatId)
+
+        elif "@makersitabot" in text:
+            sendText(chatId, msgId)
 
 
 def accept_message(msg):
