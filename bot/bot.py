@@ -62,6 +62,11 @@ def reply(msg):
     msgId = int(msg['message_id'])
     chatInfo = bot.getChat(chatId)
 
+    replyTrigger = False
+    if "reply_to_message" in msg:
+        if "username" in msg["reply_to_message"]["from"]:
+            replyTrigger = msg["reply_to_message"]["from"].get("username") == "makersitabot"
+
     if "text" in msg:
         text = msg['text']
     elif "caption" in msg:
@@ -126,7 +131,7 @@ def reply(msg):
         elif text == "/genera":
             sendText(chatId)
 
-        elif "@makersitabot" in text:
+        elif ("@makersitabot" in text) or replyTrigger:
             sendText(chatId, msgId)
 
 
