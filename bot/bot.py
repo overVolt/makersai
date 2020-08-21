@@ -3,7 +3,7 @@ from time import sleep
 from threading import Thread
 from json import load as jsload
 from os.path import abspath, dirname, join
-from random import randint, randrange
+from random import randint, uniform
 from datetime import datetime
 from textgenrnn import textgenrnn
 
@@ -27,7 +27,7 @@ def generateText():
     cachedString = ai.generate(
         n=1,
         return_as_list=True,
-        temperature=[randrange(0.1, 0.5, 0.1)],
+        temperature=[round(uniform(0.1, 0.5), 1)],
         max_gen_length=140,
         progress=False
     )[0]
