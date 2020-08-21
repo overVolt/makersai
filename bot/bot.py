@@ -3,7 +3,7 @@ from time import sleep
 from threading import Thread
 from json import load as jsload
 from os.path import abspath, dirname, join
-from random import randint
+from random import randint, randrange
 from datetime import datetime
 from textgenrnn import textgenrnn
 
@@ -27,11 +27,11 @@ def generateText():
     cachedString = ai.generate(
         n=1,
         return_as_list=True,
-        temperature=[0.5],
-        max_gen_length=280,
+        temperature=[randrange(0.1, 0.5, 0.1)],
+        max_gen_length=140,
         progress=False
     )[0]
-    sleep(settings["genCooldownSec"]-2)
+    sleep(settings["genCooldownSec"]-5)
     generateLock = False
 
 
@@ -102,7 +102,7 @@ def reply(msg):
             if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "varie", reply_to_message_id=msgId)
 
-        elif "cose diverse" in text.lower() or "cose strane" in text.lower():
+        elif ("cose diverse" in text.lower()) or ("cose strane" in text.lower()):
             if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "cose varie*", reply_to_message_id=msgId)
 
