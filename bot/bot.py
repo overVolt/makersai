@@ -24,13 +24,15 @@ ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
 def generateText():
     global generateLock, cachedString
     generateLock = True
-    cachedString = ai.generate(
-        n=1,
-        return_as_list=True,
-        temperature=[round(uniform(0.2, 0.9), 1)],
-        max_gen_length=200,
-        progress=False
-    )[0]
+    cachedString = ""
+    while not cachedString:
+        cachedString = ai.generate(
+            n=1,
+            return_as_list=True,
+            temperature=[round(uniform(0.2, 0.9), 1)],
+            max_gen_length=200,
+            progress=False
+        )[0]
     sleep(settings["genCooldownSec"]-5)
     generateLock = False
 
@@ -38,7 +40,7 @@ def generateText():
 def sendText(chatId: int=groupId, replyId: int=None):
     global generateLock
     if generateLock:
-        sent = bot.sendMessage(chatId, f"Aspetta {settings['genCooldownSec']} secondi prima di usarmi di nuovo.", reply_to_message_id=replyId)
+        sent = bot.sendMessage(chatId, f"Aspetta un po' prima di usarmi di nuovo.", reply_to_message_id=replyId)
         sleep(5)
         bot.deleteMessage((chatId, sent["message_id"]))
         return
