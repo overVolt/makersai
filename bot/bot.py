@@ -93,10 +93,14 @@ def reply(msg):
         if text.lower() == "ping":
             if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "pong", reply_to_message_id=msgId)
-
+        
         elif text.lower() == "over":
             if randint(0, 1) == 1:
                 bot.sendMessage(chatId, "Volt!", reply_to_message_id=msgId)
+        
+        elif text.lower() == "no u":
+            if randint(0, 1) == 1:
+                bot.sendMessage(chatId, "no u", reply_to_message_id=msgId)
 
         elif text.lower().endswith("cose"):
             if randint(0, 1) == 1:
