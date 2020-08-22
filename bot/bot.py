@@ -1,6 +1,6 @@
 from telepot import Bot
 from time import sleep
-from threading import Thread
+from threading import Thread, Lock
 from json import load as jsload
 from os.path import abspath, dirname, join
 from random import randint, uniform
@@ -12,8 +12,8 @@ with open(join(dirname(abspath(__file__)), "settings.json")) as settings_file:
 
 bot = Bot(settings["token"])
 groupId = int(settings["groupId"])
-generateLock = False
-cachedString = "Message not generated."
+generateLock = Lock()
+cachedString = "Messaggio non generato."
 
 aiConfigPath = join(dirname(abspath(__file__)), f"{settings['aiModelName']}")
 ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
@@ -22,33 +22,30 @@ ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
 
 
 def generateText():
-    global generateLock, cachedString
-    generateLock = True
+    global cachedString
     cachedString = ""
-    while not cachedString:
+    while cachedString == "":
         cachedString = ai.generate(
             n=1,
             return_as_list=True,
             temperature=[round(uniform(0.2, 0.9), 1)],
-            max_gen_length=200,
+            max_gen_length=160,
             progress=False
         )[0]
-    sleep(settings["genCooldownSec"]-5)
-    generateLock = False
+    sleep(settings["genCooldownSec"]-3)
 
 
-def sendText(chatId: int=groupId, replyId: int=None):
-    global generateLock
-    if generateLock:
-        sent = bot.sendMessage(chatId, f"Aspetta un po' prima di usarmi di nuovo.", reply_to_message_id=replyId)
+def sendText(chatId: int=groupId, replyId: int=None, silent: bool=False):
+    if generateLock.acquire(blocking=False):
+        bot.sendChatAction(chatId, "typing")
+        sleep(2)
+        bot.sendMessage(chatId, cachedString, reply_to_message_id=replyId)
+        generateText()
+        generateLock.release()
+    elif not silent:
+        sent = bot.sendMessage(chatId, "Aspetta un po' prima di usarmi di nuovo.", reply_to_message_id=replyId)
         sleep(5)
         bot.deleteMessage((chatId, sent["message_id"]))
-        return
-    generateLock = True
-    bot.sendChatAction(chatId, "typing")
-    sleep(2)
-    bot.sendMessage(chatId, cachedString, reply_to_message_id=replyId)
-    generateText()
 
 
 def isAdmin(userId: int, chatId: int):
@@ -58,16 +55,15 @@ def isAdmin(userId: int, chatId: int):
 
 
 def reply(msg):
-    global generateLock
     chatId = int(msg['chat']['id'])
     fromId = int(msg['from']['id'])
     msgId = int(msg['message_id'])
     chatInfo = bot.getChat(chatId)
 
-    replyTrigger = False
-    if "reply_to_message" in msg:
-        if "username" in msg["reply_to_message"]["from"]:
-            replyTrigger = msg["reply_to_message"]["from"].get("username") == "makersitabot"
+    #replyTrigger = False
+    #if "reply_to_message" in msg:
+    #    if "username" in msg["reply_to_message"]["from"]:
+    #        replyTrigger = msg["reply_to_message"]["from"].get("username") == "makersitabot"
 
     if "text" in msg:
         text = msg['text']
@@ -98,23 +94,23 @@ def reply(msg):
             return
 
         if text.lower() == "ping":
-            if randint(0, 1) == 1:
+            if randint(1, 4) == 1:
                 bot.sendMessage(chatId, "pong", reply_to_message_id=msgId)
         
         elif text.lower() == "over":
-            if randint(0, 1) == 1:
+            if randint(1, 4) == 1:
                 bot.sendMessage(chatId, "Volt!", reply_to_message_id=msgId)
         
         elif text.lower() == "no u":
-            if randint(0, 1) == 1:
+            if randint(1, 4) == 1:
                 bot.sendMessage(chatId, "no u", reply_to_message_id=msgId)
 
         elif text.lower().endswith("cose"):
-            if randint(0, 1) == 1:
+            if randint(1, 4) == 1:
                 bot.sendMessage(chatId, "varie", reply_to_message_id=msgId)
 
         elif ("cose diverse" in text.lower()) or ("cose strane" in text.lower()):
-            if randint(0, 1) == 1:
+            if randint(1, 4) == 1:
                 bot.sendMessage(chatId, "cose varie*", reply_to_message_id=msgId)
 
         elif text.startswith("/pronuncia ") and isAdmin(fromId, chatId):
@@ -123,18 +119,19 @@ def reply(msg):
                             disable_web_page_preview=True, reply_to_message_id=replyId)
 
         elif text == "/bloccagen" and isAdmin(fromId, chatId):
-            generateLock = True
-            bot.sendMessage(chatId, "Comando /genera bloccato!")
+            if generateLock.acquire(blocking=True, timeout=20):
+                bot.sendMessage(chatId, "Comando /genera bloccato!")
 
         elif text == "/sbloccagen" and isAdmin(fromId, chatId):
-            generateLock = False
-            bot.sendMessage(chatId, "Comando /genera sbloccato!")
+            if generateLock.locked():
+                generateLock.release()
+                bot.sendMessage(chatId, "Comando /genera sbloccato!")
 
         elif text == "/genera":
             sendText(chatId)
 
-        elif ("@makersitabot" in text) or replyTrigger:
-            sendText(chatId, msgId)
+        #elif ("@makersitabot" in text) or replyTrigger:
+        #    sendText(chatId, msgId)
 
 
 def accept_message(msg):
@@ -147,7 +144,5 @@ while True:
     sleep(randint(settings["minSendInterval"]*60, settings["maxSendInterval"]*60))
     hour = datetime.now().hour
     if hour in range(settings["sendStartHour"], settings["sendEndHour"]):
-        if not generateLock:
-            bot.sendChatAction(groupId, "typing")
-            bot.sendMessage(groupId, cachedString)
-            generateText()
+        if generateLock.acquire(blocking=False):
+            sendText(groupId, silent=True)
