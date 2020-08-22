@@ -13,34 +13,31 @@ with open(join(dirname(abspath(__file__)), "settings.json")) as settings_file:
 bot = Bot(settings["token"])
 groupId = int(settings["groupId"])
 generateLock = Lock()
-cachedString = "Messaggio non generato."
 
-aiConfigPath = join(dirname(abspath(__file__)), f"{settings['aiModelName']}")
+aiConfigPath = join(dirname(abspath(__file__)), settings['aiModelName'])
 ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
                 vocab_path=f"{aiConfigPath}_vocab.json",
                 config_path=f"{aiConfigPath}_config.json")
 
 
 def generateText():
-    global cachedString
-    cachedString = ""
-    while cachedString == "":
-        cachedString = ai.generate(
+    gen = ""
+    while gen == "":
+        gen = ai.generate(
             n=1,
             return_as_list=True,
             temperature=[round(uniform(0.2, 0.9), 1)],
             max_gen_length=160,
             progress=False
         )[0]
-    sleep(settings["genCooldownSec"]-3)
+    return gen
 
 
 def sendText(chatId: int=groupId, replyId: int=None, silent: bool=False):
     if generateLock.acquire(blocking=False):
         bot.sendChatAction(chatId, "typing")
-        sleep(2)
-        bot.sendMessage(chatId, cachedString, reply_to_message_id=replyId)
-        generateText()
+        bot.sendMessage(chatId, generateText(), reply_to_message_id=replyId)
+        sleep(settings["genCooldownSec"])
         generateLock.release()
     elif not silent:
         sent = bot.sendMessage(chatId, "Aspetta un po' prima di usarmi di nuovo.", reply_to_message_id=replyId)
@@ -138,11 +135,9 @@ def accept_message(msg):
     Thread(target=reply, args=[msg]).start()
 
 bot.message_loop({'chat': accept_message})
-generateText()
 
 while True:
     sleep(randint(settings["minSendInterval"]*60, settings["maxSendInterval"]*60))
-    hour = datetime.now().hour
-    if hour in range(settings["sendStartHour"], settings["sendEndHour"]):
+    if datetime.now().hour in range(settings["sendStartHour"], settings["sendEndHour"]):
         if generateLock.acquire(blocking=False):
             sendText(groupId, silent=True)
