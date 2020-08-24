@@ -62,6 +62,9 @@ def reloadAdmins(chatId: int=groupId):
     newAdmins = select(u for u in User if u.chatId in adminList)[:]
     for adm in newAdmins:
         adm.isAdmin = True
+    for adm in adminList:
+        if not User.exists(lambda u: u.chatId == adm):
+            User(chatId=adm, isAdmin=True)
 
 
 @db_session
@@ -117,10 +120,10 @@ def reply(msg):
 
         if not User.exists(lambda u: u.chatId == fromId):
             User(chatId=fromId)
-        if not Data.exists(lambda d: d.id == 0):
+        if not Data.exists(lambda d: d.chatId == chatId):
             Data()
         user = User.get(chatId=fromId)
-        data = Data.get(id=0)
+        data = Data.get(chatId=chatId)
 
         if text.lower() == "ping":
             if randint(1, 3) == 1:
