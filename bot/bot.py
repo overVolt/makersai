@@ -120,10 +120,10 @@ def reply(msg):
 
         if not User.exists(lambda u: u.chatId == fromId):
             User(chatId=fromId)
-        if not Data.exists(lambda d: d.chatId == chatId):
-            Data(chatId=chatId)
+        if not Data.exists(lambda d: d.id == 1):
+            Data(id=1)
         user = User.get(chatId=fromId)
-        data = Data.get(chatId=chatId)
+        data = Data.get(id=1)
 
         if text.lower() == "ping":
             if randint(1, 3) == 1:

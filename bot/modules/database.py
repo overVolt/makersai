@@ -10,7 +10,6 @@ class User(db.Entity):
 
 
 class Data(db.Entity):
-    chatId = Required(int)
     actSentMessages = Required(IntArray, default=[])
     genLocked = Required(bool, default=False)
 
