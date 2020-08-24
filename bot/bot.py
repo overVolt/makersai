@@ -115,7 +115,7 @@ def reply(msg):
             bot.leaveChat(chatId)
             return
 
-        if not User.exists(lambda u: u.chatId == chatId):
+        if not User.exists(lambda u: u.chatId == fromId):
             User(chatId=fromId)
         if not Data.exists(lambda d: d.id == 0):
             Data()
