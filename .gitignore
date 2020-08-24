@@ -1,4 +1,5 @@
 bot/settings.json
+bot/makersitabot.db
 .idea/
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm,macos,windows,python,git,linux
