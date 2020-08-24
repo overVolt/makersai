@@ -1,6 +1,6 @@
 from telepot import Bot
-from time import time, sleep
-import sched
+from time import sleep
+import schedule
 from threading import Thread
 from json import load as jsload
 from os.path import abspath, dirname, join
@@ -15,7 +15,6 @@ with open(join(dirname(abspath(__file__)), "settings.json")) as settings_file:
 
 bot = Bot(settings["token"])
 groupId = int(settings["groupId"])
-sch = sched.scheduler(time, sleep)
 
 aiConfigPath = join(dirname(abspath(__file__)), "weights", settings['aiModelName'])
 ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
@@ -46,8 +45,6 @@ def sendText(chatId: int=groupId, replyId: int=None, userId: int=None):
             commit()
             bot.sendChatAction(chatId, "typing")
             bot.sendMessage(chatId, generateText(), reply_to_message_id=replyId)
-            if user.remainingCalls == 0:
-                sch.enter(settings["callsResetCooldown"], 5, resetCalls, argument=(userId,))
         else:
             sent = bot.sendMessage(chatId, "Hai superato gli utilizzi massimi del bot. "
                                            "Aspetta un po' prima di usarmi di nuovo.", reply_to_message_id=replyId)
@@ -76,6 +73,12 @@ def resetCalls(userId: int=None):
     else:
         user = User.get(chatId=userId)
         user.remainingCalls = 3
+
+
+def sendSelfMessage(chatId: int=groupId):
+    now = datetime.now()
+    if now.hour in range(settings["sendStartHour"], settings["sendEndHour"]):
+        sendText(chatId=chatId)
 
 
 @db_session
@@ -167,15 +170,15 @@ def reply(msg):
             bot.sendMessage(chatId, "✅ Bot riavviato!")
 
         elif text == "/genera" and (not data.genLocked or user.isAdmin):
-            sendText(chatId)
+            sendText(chatId, userId=fromId if not user.isAdmin else None)
 
         elif ("@makersitabot" in text) and ((not data.genLocked) or user.isAdmin):
-            sendText(chatId, msgId)
+            sendText(chatId, msgId, fromId if not user.isAdmin else None)
 
         elif replyTrigger and (not data.genLocked or user.isAdmin):
             replyMsgId = int(msg["reply_to_message"]["message_id"])
             if replyMsgId not in data.actSentMessages:
-                sendText(chatId, msgId)
+                sendText(chatId, msgId, fromId if not user.isAdmin else None)
                 if user.remainingCalls > 0:
                     data.actSentMessages.append(replyMsgId)
                     commit()
@@ -185,9 +188,10 @@ def accept_message(msg):
     Thread(target=reply, args=[msg]).start()
 
 reloadAdmins()
+schedule.every().hour.at(":00").do(resetCalls)
+schedule.every(settings["minSendInterval"]*60).to(settings["maxSendInterval"]*60).minutes.do(sendSelfMessage)
 bot.message_loop({'chat': accept_message})
 
 while True:
-    sleep(randint(settings["minSendInterval"]*60, settings["maxSendInterval"]*60))
-    if datetime.now().hour in range(settings["sendStartHour"], settings["sendEndHour"]):
-        sendText()
+    schedule.run_pending()
+    sleep(60)
