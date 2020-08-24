@@ -26,10 +26,10 @@ def generateText():
         gen = ai.generate(
             n=1,
             return_as_list=True,
-            temperature=[round(uniform(0.2, 0.9), 1)],
+            temperature=[round(uniform(0.3, 1.0), 1)],
             max_gen_length=160,
             progress=False
-        )[0]
+        )[0].strip("\"'/\\") # ", ', /, \
     return gen
 
 
