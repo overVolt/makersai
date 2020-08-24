@@ -17,7 +17,7 @@ bot = Bot(settings["token"])
 groupId = int(settings["groupId"])
 sch = sched.scheduler(time, sleep)
 
-aiConfigPath = join(dirname(abspath(__file__)), settings['aiModelName'], "weights")
+aiConfigPath = join(dirname(abspath(__file__)), "weights", settings['aiModelName'])
 ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
                 vocab_path=f"{aiConfigPath}_vocab.json",
                 config_path=f"{aiConfigPath}_config.json")
