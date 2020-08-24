@@ -121,7 +121,7 @@ def reply(msg):
         if not User.exists(lambda u: u.chatId == fromId):
             User(chatId=fromId)
         if not Data.exists(lambda d: d.chatId == chatId):
-            Data()
+            Data(chatId=chatId)
         user = User.get(chatId=fromId)
         data = Data.get(chatId=chatId)
 
