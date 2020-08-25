@@ -38,6 +38,8 @@ def sendText(chatId: int=groupId, replyId: int=None, userId: int=None):
     if not userId:
         bot.sendChatAction(chatId, "typing")
         bot.sendMessage(chatId, generateText(), reply_to_message_id=replyId)
+        if randint(1, 20) < 4: # 15%
+            bot.sendMessage(chatId, generateText())
     else:
         user = User.get(chatId=userId)
         if user.remainingCalls > 0:
@@ -45,6 +47,8 @@ def sendText(chatId: int=groupId, replyId: int=None, userId: int=None):
             commit()
             bot.sendChatAction(chatId, "typing")
             bot.sendMessage(chatId, generateText(), reply_to_message_id=replyId)
+            if randint(1, 20) < 4:  # 15%
+                bot.sendMessage(chatId, generateText())
         else:
             sent = bot.sendMessage(chatId, "Hai superato gli utilizzi massimi del bot. "
                                            "Aspetta un po' prima di usarmi di nuovo.", reply_to_message_id=replyId)
@@ -67,12 +71,12 @@ def reloadAdmins(chatId: int=groupId):
 @db_session
 def resetCalls(userId: int=None):
     if not userId:
-        pendingUsers = select(u for u in User if u.remainingCalls < 3)[:]
+        pendingUsers = select(u for u in User if u.remainingCalls < settings["callsPerHour"])[:]
         for user in pendingUsers:
-            user.remainingCalls = 3
+            user.remainingCalls = settings["callsPerHour"]
     else:
         user = User.get(chatId=userId)
-        user.remainingCalls = 3
+        user.remainingCalls = settings["callsPerHour"]
 
 
 def sendSelfMessage(chatId: int=groupId):
@@ -167,7 +171,9 @@ def reply(msg):
             reloadAdmins()
             resetCalls()
             data.genLocked = False
-            bot.sendMessage(chatId, "✅ Bot riavviato!")
+            bot.sendMessage(chatId, "✅ Bot riavviato!\n"
+                                    "✅ Lista admin aggiornata!\n"
+                                    "✅ Limitazioni rimosse!")
 
         elif text == "/genera" and (not data.genLocked or user.isAdmin):
             sendText(chatId, userId=fromId if not user.isAdmin else None)
@@ -178,10 +184,10 @@ def reply(msg):
         elif replyTrigger and (not data.genLocked or user.isAdmin):
             replyMsgId = int(msg["reply_to_message"]["message_id"])
             if replyMsgId not in data.actSentMessages:
-                sendText(chatId, msgId, fromId if not user.isAdmin else None)
                 if user.remainingCalls > 0:
                     data.actSentMessages.append(replyMsgId)
                     commit()
+                sendText(chatId, msgId, fromId if not user.isAdmin else None)
 
 
 def accept_message(msg):
@@ -189,7 +195,8 @@ def accept_message(msg):
 
 reloadAdmins()
 schedule.every().hour.at(":00").do(resetCalls)
-schedule.every(settings["minSendInterval"]*60).to(settings["maxSendInterval"]*60).minutes.do(sendSelfMessage)
+schedule.every(settings["minSendInterval"]*60)\
+    .to(settings["maxSendInterval"]*60).minutes.do(sendSelfMessage)
 bot.message_loop({'chat': accept_message})
 
 while True:
