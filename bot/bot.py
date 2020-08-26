@@ -22,14 +22,19 @@ ai = textgenrnn(weights_path=f"{aiConfigPath}_weights.hdf5",
                 config_path=f"{aiConfigPath}_config.json")
 
 
+@db_session
 def generateText():
-    gen = ai.generate(
-        n=1,
-        return_as_list=True,
-        temperature=[round(uniform(0.3, 0.9), 1)],
-        max_gen_length=160,
-        progress=False
-    )[0].strip("\"'/\\ <>") # ", ', /, \, <space>, <, >
+    data = Data.get(id=1)
+    gen = ""
+    while (gen == "") or (gen in data.actSentPhrases):
+        gen = ai.generate(
+            n=1,
+            return_as_list=True,
+            temperature=[round(uniform(0.3, 0.9), 1)],
+            max_gen_length=160,
+            progress=False
+        )[0].strip("\"'/\\ <>") # ", ', /, \, <space>, <, >
+    data.actSentPhrases.append(gen)
     return gen
 
 
@@ -83,6 +88,13 @@ def sendSelfMessage(chatId: int=groupId):
     now = datetime.now()
     if now.hour in range(settings["sendStartHour"], settings["sendEndHour"]):
         sendText(chatId=chatId)
+
+
+@db_session
+def resetCacheLists():
+    data = Data.get(id=1)
+    data.actSentMessages.clear()
+    data.actSentPhrases.clear()
 
 
 @db_session
@@ -195,6 +207,7 @@ def accept_message(msg):
 
 reloadAdmins()
 schedule.every().hour.at(":00").do(resetCalls)
+schedule.every().day.at("02:00").do(resetCacheLists)
 schedule.every(settings["minSendInterval"]*60)\
     .to(settings["maxSendInterval"]*60).minutes.do(sendSelfMessage)
 bot.message_loop({'chat': accept_message})
