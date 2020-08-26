@@ -30,7 +30,7 @@ def generateText():
         gen = ai.generate(
             n=1,
             return_as_list=True,
-            temperature=[round(uniform(0.3, 0.9), 1)],
+            temperature=[round(uniform(settings["minGenTemp"], settings["maxGenTemp"]), 1)],
             max_gen_length=160,
             progress=False
         )[0].strip("\"'/\\ <>") # ", ', /, \, <space>, <, >
